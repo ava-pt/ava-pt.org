@@ -581,7 +581,7 @@
         sexta: 'day_viernes',
         sabado: 'day_sabado',
         domingo: 'day_domingo',
-        segunda-feira: 'day_lunes',
+        'segunda-feira': 'day_lunes',
         'terça-feira': 'day_martes',
         'quarta-feira': 'day_miercoles',
         'quinta-feira': 'day_jueves',
