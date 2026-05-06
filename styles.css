@@ -1001,6 +1001,26 @@ img {
     50% { opacity: 0.3; }
 }
 
+.event-status.soldout {
+    color: var(--red);
+}
+
+.event-status.soldout::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: var(--red);
+    border-radius: 50%;
+}
+
+.reg-info {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--gray-600);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
 .events-empty {
     text-align: center;
     padding: 40px 20px;

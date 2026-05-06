@@ -62,6 +62,7 @@
             status_open: 'Inscripciones abiertas',
             status_confirmed: 'Confirmado',
             status_soon: 'Próximamente',
+            status_soldout: 'Agotado',
             cat_label_cultural: 'Cultural',
             cat_label_desportivo: 'Deportivo',
             cat_label_social: 'Social',
@@ -135,6 +136,7 @@
             status_open: 'Inscrições abertas',
             status_confirmed: 'Confirmado',
             status_soon: 'Em breve',
+            status_soldout: 'Esgotado',
             cat_label_cultural: 'Cultural',
             cat_label_desportivo: 'Desportivo',
             cat_label_social: 'Social',
@@ -694,17 +696,36 @@
         };
     }
 
+    function isValidUrl(str) {
+        if (!str) return false;
+        return /^https?:\/\/.+/i.test(str.trim());
+    }
+
+    function normalizeStatus(status) {
+        if (!status) return 'confirmed';
+        return status.toLowerCase().replace(/\s+/g, '');
+    }
+
+    function renderRegistration(registrationUrl, status) {
+        if (status === 'soldout') return '';
+        if (!registrationUrl) return '';
+        var regLabel = currentLang === 'pt' ? 'Inscrever-se' : 'Inscribirse';
+        if (isValidUrl(registrationUrl)) {
+            return '<a href="' + registrationUrl + '" target="_blank" rel="noopener noreferrer" class="btn-register">' + regLabel + '</a>';
+        }
+        return '<span class="reg-info">' + registrationUrl + '</span>';
+    }
+
     function createEventCard(event) {
         var date = formatDate(event.date);
         var card = document.createElement('article');
         card.className = 'event-card';
-        var statusClass = event.status || 'confirmed';
+        var statusClass = normalizeStatus(event.status);
         var statusText = event.status === 'open' && !event.registrationUrl
             ? getStatusLabel('confirmed')
             : (getStatusLabel(statusClass) || getStatusLabel('confirmed'));
         var title = event['title_' + currentLang] || event.title_es || event.title_pt || '';
         var desc = event['desc_' + currentLang] || event.desc_es || event.desc_pt || '';
-        var regLabel = currentLang === 'pt' ? 'Inscrever-se' : 'Inscribirse';
 
         card.innerHTML =
             '<div class="event-card-header">' +
@@ -720,7 +741,7 @@
             '</div>' +
             '<div class="event-card-footer">' +
                 '<span class="event-status ' + statusClass + '">' + statusText + '</span>' +
-                (event.registrationUrl ? '<a href="' + event.registrationUrl + '" target="_blank" rel="noopener noreferrer" class="btn-register">' + regLabel + '</a>' : '') +
+                renderRegistration(event.registrationUrl, event.status) +
             '</div>';
         return card;
     }
@@ -744,7 +765,7 @@
     function createActivityCard(activity) {
         var card = document.createElement('article');
         card.className = 'activity-card';
-        var statusClass = activity.status || 'confirmed';
+        var statusClass = normalizeStatus(activity.status);
         var statusText = activity.status === 'open' && !activity.registrationUrl
             ? getStatusLabel('confirmed')
             : (getStatusLabel(statusClass) || getStatusLabel('confirmed'));
@@ -753,7 +774,6 @@
         var desc = activity['desc_' + currentLang] || activity.desc_es || activity.desc_pt || '';
         var dayText = activity.day ? getDayLabel(dayKeyMap[activity.day] || activity.day) : '';
         var freqText = activity.frequency ? getFrequencyLabel(activity.frequency) : '';
-        var regLabel = currentLang === 'pt' ? 'Inscrever-se' : 'Inscribirse';
 
         card.innerHTML =
             '<div class="activity-card-header">' +
@@ -770,7 +790,7 @@
             '</div>' +
             '<div class="activity-card-footer">' +
                 '<span class="event-status ' + statusClass + '">' + statusText + '</span>' +
-                (activity.registrationUrl ? '<a href="' + activity.registrationUrl + '" target="_blank" rel="noopener noreferrer" class="btn-register">' + regLabel + '</a>' : '') +
+                renderRegistration(activity.registrationUrl, activity.status) +
             '</div>';
         return card;
     }
