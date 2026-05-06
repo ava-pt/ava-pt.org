@@ -782,7 +782,7 @@
         var sheetData = await loadFromGoogleSheets();
         var data;
         if (sheetData) {
-            data = sheetData
+            var sheetActivities = sheetData
                 .filter(function(row) { return row.type === 'actividad'; })
                 .map(function(row) {
                     return {
@@ -802,6 +802,7 @@
                         status: row.status || 'confirmed'
                     };
                 });
+            data = sheetActivities.length > 0 ? sheetActivities : activitiesData;
         } else {
             data = activitiesData;
         }

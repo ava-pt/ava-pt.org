@@ -464,7 +464,6 @@ img {
 .hero {
     padding: 90px 0 40px;
     position: relative;
-    min-height: 100vh;
     display: flex;
     align-items: flex-start;
 }
