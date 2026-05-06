@@ -699,7 +699,7 @@ img {
 }
 
 .section-title {
-    font-size: 1.25rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--gray-900);
     margin-bottom: 6px;
@@ -980,6 +980,26 @@ img {
     background: var(--blue);
     border-radius: 50%;
     box-shadow: 0 0 0 3px rgba(0,61,165,0.1);
+}
+
+.event-status.soon {
+    color: var(--red);
+    animation: blinkSoon 1.2s ease-in-out infinite;
+}
+
+.event-status.soon::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(207,10,44,0.15);
+    animation: blinkSoon 1.2s ease-in-out infinite;
+}
+
+@keyframes blinkSoon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
 .events-empty {
@@ -1621,7 +1641,7 @@ img {
     }
 
     .section-title {
-        font-size: 1.4rem;
+        font-size: 1.8rem;
     }
 
     .events .container,

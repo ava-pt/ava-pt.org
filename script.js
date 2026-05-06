@@ -15,7 +15,7 @@
             nav_inicio: 'Inicio',
             nav_eventos: 'Eventos',
             nav_actividades: 'Actividades',
-            nav_sobre: 'Sobre',
+            nav_sobre: 'Quiénes Somos',
             nav_contacto: 'Contacto',
             nav_portal: 'Portal del Socio',
             hero_tagline: 'Venezolanos en Portugal',
@@ -24,8 +24,8 @@
             link_actividades: 'Actividades Periódicas',
             link_sobre: '¿Quiénes Somos?',
             hero_cta: 'Únete a nuestra comunidad venezolana en el Algarve',
-            events_title: 'Eventos y Actividades 2026',
-            events_subtitle: 'Conoce las iniciativas de nuestra comunidad a lo largo del año',
+            events_title: 'Próximos Eventos',
+            events_subtitle: 'Conoce las iniciativas de nuestra comunidad',
             filter_categoria: 'Categoría',
             filter_mes: 'Mes',
             cat_todas: 'Todas',
@@ -40,7 +40,7 @@
             mes_8: 'Septiembre', mes_9: 'Octubre', mes_10: 'Noviembre', mes_11: 'Diciembre',
             events_empty: 'No se encontraron eventos para los filtros seleccionados.',
             activities_title: 'Actividades Periódicas',
-            activities_subtitle: 'Encuentros regulares de nuestra comunidad a lo largo del año',
+            activities_subtitle: 'Encuentros regulares de nuestra comunidad',
             about_title: '¿Quiénes Somos?',
             about_p1: 'La <strong>Asociación Venezuela Amiga</strong> es una organización sin fines de lucro dedicada a la integración, apoyo y celebración de la cultura venezolana en Portugal.',
             about_p2: 'Desde nuestra fundación en 2010, trabajamos para crear puentes entre la comunidad venezolana y la sociedad portuguesa, promoviendo eventos culturales, actividades deportivas, acciones solidarias e iniciativas educativas.',
@@ -88,7 +88,7 @@
             nav_inicio: 'Início',
             nav_eventos: 'Eventos',
             nav_actividades: 'Actividades',
-            nav_sobre: 'Sobre',
+            nav_sobre: 'Quem Somos',
             nav_contacto: 'Contacto',
             nav_portal: 'Portal do Sócio',
             hero_tagline: 'Venezuelanos em Portugal',
@@ -97,8 +97,8 @@
             link_actividades: 'Actividades Periódicas',
             link_sobre: 'Quem Somos?',
             hero_cta: 'Junte-se à nossa comunidade venezuelana no Algarve',
-            events_title: 'Eventos e Actividades 2026',
-            events_subtitle: 'Conheça as iniciativas da nossa comunidade ao longo do ano',
+            events_title: 'Próximos Eventos',
+            events_subtitle: 'Conheça as iniciativas da nossa comunidade',
             filter_categoria: 'Categoria',
             filter_mes: 'Mês',
             cat_todas: 'Todas',
@@ -113,7 +113,7 @@
             mes_8: 'Setembro', mes_9: 'Outubro', mes_10: 'Novembro', mes_11: 'Dezembro',
             events_empty: 'Nenhum evento encontrado para os filtros selecionados.',
             activities_title: 'Actividades Periódicas',
-            activities_subtitle: 'Encontros regulares da nossa comunidade ao longo do ano',
+            activities_subtitle: 'Encontros regulares da nossa comunidade',
             about_title: 'Quem Somos?',
             about_p1: 'A <strong>Associação Venezuela Amiga</strong> é uma organização sem fins lucrativos dedicada à integração, apoio e celebração da cultura venezuelana em Portugal.',
             about_p2: 'Desde a nossa fundação em 2010, trabalhamos para criar pontes entre a comunidade venezuelana e a sociedade portuguesa, promovendo eventos culturais, actividades desportivas, acções solidárias e iniciativas educativas.',
@@ -335,6 +335,14 @@
         return t('freq_' + freq) || freq;
     }
     function getDayLabel(day) {
+        if (!day) return '';
+        // If already a translation key like "day_lunes", translate directly
+        if (day.startsWith('day_')) {
+            return t(day) || day.replace('day_', '');
+        }
+        // Try mapped key first, then raw, then return raw as-is
+        var mapped = dayKeyMap[day];
+        if (mapped) return t(mapped) || day;
         return t('day_' + day) || day;
     }
 
@@ -564,7 +572,7 @@
         }
     ];
 
-    // Day key mapping
+    // Day key mapping (Portuguese source keys → translation keys)
     const dayKeyMap = {
         segunda: 'day_lunes',
         terca: 'day_martes',
@@ -572,7 +580,17 @@
         quinta: 'day_jueves',
         sexta: 'day_viernes',
         sabado: 'day_sabado',
-        domingo: 'day_domingo'
+        domingo: 'day_domingo',
+        segunda-feira: 'day_lunes',
+        'terça-feira': 'day_martes',
+        'quarta-feira': 'day_miercoles',
+        'quinta-feira': 'day_jueves',
+        'sexta-feira': 'day_viernes',
+        lunes: 'day_lunes',
+        martes: 'day_martes',
+        miercoles: 'day_miercoles',
+        jueves: 'day_jueves',
+        viernes: 'day_viernes'
     };
 
     // ========================================
