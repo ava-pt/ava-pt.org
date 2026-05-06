@@ -76,3 +76,92 @@ COMMITS REALIZADOS:
    - 56ace51  Agregar botón Portal do Sócio en header
    - 8077c16  i18n ES/PT, selector idioma, cookies GDPR, portal reubicado
    - 4520378  Cache-busting automático: CSS/JS recargan en cada visita
+
+
+================================================================================
+BITÁCORA — 2026-05-06
+================================================================================
+
+PROYECTO: ava-eventos (copia de venezuela-amiga)
+REPO: https://github.com/ava-pt/ava-pt.org
+SITIO: https://ava-pt.github.io/ava-pt.org/ (GitHub Pages)
+DOMINIO: ava-pt.org (Cloudflare DNS → GitHub Pages)
+
+1. CONFIGURACIÓN INICIAL
+   - Copia de venezuela-amiga a nueva carpeta ava-eventos
+   - Repo GitHub creado: ava-pt/ava-pt.org (cuenta socio.ava@gmail.com)
+   - GitHub Pages activado
+   - DNS Cloudflare configurado (4 registros A → IPs de GitHub)
+   - Dominio personalizado ava-pt.org activo (HTTP funcional, SSL en proceso)
+
+2. ELIMINACIÓN SECCIÓN "DATOS DE CONTACTO"
+   - Sección de contacto eliminada del HTML
+   - Link "Contacto" eliminado del menú de navegación y del hero card
+   - Datos de contacto (email, teléfono, dirección) movidos al footer
+
+3. SIMPLIFICACIÓN DEL HERO CARD
+   - Eliminados: botones de acción (WhatsApp, Email, Llamar)
+   - Eliminados: card-links de navegación (Eventos, Actividades, Sobre)
+   - Eliminado: banner CTA "Únete a nuestra comunidad..."
+   - Eliminados: iconos de redes sociales (Facebook, Instagram, WhatsApp)
+   - Solo queda: logo, nombre, tagline y "ALGARVE"
+
+4. CAMBIOS DE TEXTOS Y TÍTULOS
+   - "Sobre" → "Quiénes Somos" (ES) / "Quem Somos" (PT) en menú nav
+   - "Eventos y Actividades 2026" → "Próximos Eventos"
+   - "Conoce las iniciativas de nuestra comunidad a lo largo del año"
+     → "Conoce las iniciativas de nuestra comunidad"
+   - "Encuentros regulares de nuestra comunidad a lo largo del año"
+     → "Encuentros regulares de nuestra comunidad"
+   - Títulos de sección agrandados (1.25rem → 1.6rem / 1.8rem desktop)
+
+5. FIX: MOSTRAR DÍAS DE LA SEMANA
+   - dayKeyMap ampliado con nombres portugueses: segunda, terca, quarta, quinta, sexta
+   - Agregadas variantes con guion: segunda-feira, terça-feira, etc.
+   - getDayLabel corregido para no duplicar prefijo "day_"
+   - Si no encuentra traducción, muestra el texto raw del origen
+
+6. FIX: ERROR DE SINTAXIS JAVASCRIPT
+   - Claves con guion en dayKeyMap (ej: segunda-feira) sin comillas
+   - Causaba que TODO el script fallara (eventos, actividades, idioma)
+   - Corregido añadiendo comillas a las claves con guion
+
+7. FIX: HERO CON EXCESO DE ESPACIO
+   - Eliminado min-height: 100vh de la sección hero
+   - Ahora se adapta al contenido reducido
+
+8. FIX: ACTIVIDADES NO SE MOSTRABAN
+   - renderActivities() no tenía fallback a datos embebidos
+   - Si Google Sheet no tiene filas tipo "actividad", usa activitiesData
+   - Corregido el mapeo de datos del Google Sheet (title, description)
+
+9. STATUS "SOON" — PRÓXIMAMENTE
+   - Punto rojo + texto rojo + animación de parpadeo (blinkSoon)
+   - ES: "Próximamente" / PT: "Em breve"
+   - CSS: @keyframes blinkSoon con opacidad 1 → 0.3
+
+10. STATUS "SOLD OUT" — AGOTADO
+    - ES: "Agotado" / PT: "Esgotado"
+    - Punto rojo + texto rojo (sin parpadeo)
+    - No muestra botón de inscripción
+    - Normalización: "sold out", "soldout", "Sold Out" → todos funcionan
+
+11. REGISTRATIONURL INTELIGENTE
+    - Si es URL válida (https://...) → botón "Inscribirse" clicable
+    - Si NO es URL (ej: "Maria - 912 345 678") → texto informativo
+    - Útil para excursiones con teléfono y nombre del responsable
+
+12. FILTROS DE CATEGORÍA EN ACTIVIDADES
+    - Mismos botones que en Eventos: Todas, Cultural, Deportivo, Social, Educativo, Comunitario
+    - Filtrado en tiempo real sin recargar datos del Google Sheet
+    - Compatible con cambio de idioma ES/PT
+
+COMMITS REALIZADOS:
+   - (initial)  Copia de venezuela-amiga a ava-eventos
+   - 038dc0c  CNAME para dominio personalizado ava-pt.org
+   - 1f92aa3  Eliminar sección contacto, info en footer
+   - a0beb21  UI: fix días, status soon, simplificar hero, títulos
+   - cd33e26  Fix hero spacing y fallback actividades
+   - 3cc7fea  Fix syntax error dayKeyMap (comillas en claves con guion)
+   - 26d016d  Status soldout, registrationUrl como texto informativo
+   - e966604  Filtros de categoría en Actividades Periódicas
