@@ -352,14 +352,17 @@
     // State
     // ========================================
     let events = [];
+    let activities = [];
     let activeCategory = 'todas';
     let activeMonth = 'todos';
+    let activeActivityCategory = 'todas';
 
     // DOM
     const grid = document.getElementById('events-grid');
     const emptyState = document.getElementById('events-empty');
     const categoryFilters = document.getElementById('category-filters');
     const monthFilter = document.getElementById('month-filter');
+    const activityCategoryFilters = document.getElementById('activity-category-filters');
     const navToggle = document.getElementById('nav-toggle');
     const navList = document.querySelector('.nav-list');
 
@@ -826,7 +829,22 @@
         } else {
             data = activitiesData;
         }
-        data.forEach(function(activity) {
+        activities = data;
+        renderFilteredActivities();
+    }
+
+    function getFilteredActivities() {
+        return activities.filter(function(activity) {
+            return activeActivityCategory === 'todas' || activity.category === activeActivityCategory;
+        });
+    }
+
+    function renderFilteredActivities() {
+        var actGrid = document.getElementById('activities-grid');
+        if (!actGrid) return;
+        actGrid.innerHTML = '';
+        var filtered = getFilteredActivities();
+        filtered.forEach(function(activity) {
             actGrid.appendChild(createActivityCard(activity));
         });
     }
@@ -842,6 +860,17 @@
         activeCategory = btn.dataset.category;
         renderEvents();
     });
+
+    if (activityCategoryFilters) {
+        activityCategoryFilters.addEventListener('click', function(e) {
+            var btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            activityCategoryFilters.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            activeActivityCategory = btn.dataset.category;
+            renderFilteredActivities();
+        });
+    }
 
     monthFilter.addEventListener('change', function(e) {
         activeMonth = e.target.value;
