@@ -7,7 +7,7 @@ Luego abre http://localhost:8000 en el navegador.
 
 Valores permitidos: 
 Category: cultural, desportivo, social, educativo, comunitario
-status: open, confirmed, soon.
+status: open, confirmed, soon, sold out, closed.
 frequency: semanal, quinzenal, mensal, bimensal.
 
 ================================================================================
@@ -165,3 +165,36 @@ COMMITS REALIZADOS:
    - 3cc7fea  Fix syntax error dayKeyMap (comillas en claves con guion)
    - 26d016d  Status soldout, registrationUrl como texto informativo
    - e966604  Filtros de categoría en Actividades Periódicas
+
+
+================================================================================
+BITÁCORA — 2026-05-10
+================================================================================
+
+PROYECTO: ava-eventos
+REPO: https://github.com/ava-pt/ava-pt.org
+SITIO: https://ava-pt.org
+
+1. FILTRADO DE EVENTOS Y ACTIVIDADES POR FECHA Y ESTADO
+   - Nueva función shouldShowItem() en script.js (línea 581)
+   - Lógica de filtrado:
+     * status "closed" → nunca se muestra
+     * Fecha vacía o inválida → se muestra (si no es closed)
+     * Fecha pasada → se oculta
+     * Fecha de hoy o futura → se muestra
+   - Se aplica el filtro a:
+     * Eventos del Google Sheets CSV (loadEvents)
+     * Eventos embebidos (eventsData fallback)
+     * Actividades del Google Sheets CSV (renderActivities)
+     * Actividades embebidas (activitiesData fallback)
+
+2. INVESTIGACIÓN: EVENTO 5 NO SE MOSTRABA
+   - Usuario reportó evento id 5 (fecha 2026-05-17, status open) no visible
+   - Se verificó el CSV de Google Sheets: fecha en formato ISO 2026-05-17, status open
+   - Prueba local con Node.js confirmó que shouldShowItem devuelve true para ese evento
+   - Verificación del script desplegado: función shouldShowItem presente en línea 581
+   - Conclusión: la lógica es correcta, problema más probable es caché del navegador
+   - Recomendación: hard refresh (Ctrl+Shift+R) para cargar la versión actualizada
+
+COMMITS REALIZADOS:
+   - 9b616c0  Filter events/activities by date and status
