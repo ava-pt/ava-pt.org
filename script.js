@@ -577,6 +577,18 @@
         }
     ];
 
+    // Filter: hide past dates, hide closed status, always show if no valid date and not closed
+    function shouldShowItem(item) {
+        if (normalizeStatus(item.status) === 'closed') return false;
+        if (!item.date) return true;
+        var d = new Date(item.date);
+        if (isNaN(d.getTime())) return true;
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        d.setHours(0, 0, 0, 0);
+        return d >= today;
+    }
+
     // Day key mapping (Portuguese source keys → translation keys)
     const dayKeyMap = {
         segunda: 'day_lunes',
@@ -671,9 +683,11 @@
                         registrationUrl: row.registrationUrl || null,
                         status: row.status || 'confirmed'
                     };
-                }).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+                })
+                .filter(shouldShowItem)
+                .sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
         } else {
-            events = eventsData.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+            events = eventsData.filter(shouldShowItem).sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
         }
         renderEvents();
     }
@@ -824,10 +838,11 @@
                         registrationUrl: row.registrationUrl || null,
                         status: row.status || 'confirmed'
                     };
-                });
-            data = sheetActivities.length > 0 ? sheetActivities : activitiesData;
+                })
+                .filter(shouldShowItem);
+            data = sheetActivities.length > 0 ? sheetActivities : activitiesData.filter(shouldShowItem);
         } else {
-            data = activitiesData;
+            data = activitiesData.filter(shouldShowItem);
         }
         activities = data;
         renderFilteredActivities();
