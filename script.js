@@ -611,76 +611,61 @@
     };
 
     // ========================================
-    // Google Sheets
+    // InsForge (events table — replaces Google Sheets CSV)
     // ========================================
-    function parseCSV(csvText) {
-        var lines = csvText.split('\n').filter(function(line) { return line.trim(); });
-        if (lines.length < 2) return [];
-        var headers = lines[0].split(',').map(function(h) { return h.trim().replace(/^"|"$/g, ''); });
-        var rows = [];
-        for (var i = 1; i < lines.length; i++) {
-            var values = [];
-            var current = '';
-            var inQuotes = false;
-            for (var j = 0; j < lines[i].length; j++) {
-                var char = lines[i][j];
-                if (char === '"') { inQuotes = !inQuotes; }
-                else if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; }
-                else { current += char; }
+    var EVENTS_COLUMNS = 'id,type,title_pt,title_es,subtitle_pt,subtitle_es,desc_pt,desc_es,date,frequency,day,time,location,category,registration,status';
+    var eventDataPromise = null;
+
+    function loadFromInsForge() {
+        var baseUrl = window.INSFORGE_URL;
+        var anonKey = window.INSFORGE_ANON_KEY;
+        if (!baseUrl || !anonKey) return Promise.resolve(null);
+        var url = baseUrl + '/api/database/records/events?select=' +
+            EVENTS_COLUMNS + '&order=created_at&limit=200';
+        return fetch(url, {
+            headers: {
+                'Authorization': 'Bearer ' + anonKey,
+                'apikey': anonKey
             }
-            values.push(current.trim());
-            var row = {};
-            headers.forEach(function(header, index) {
-                var val = values[index] || '';
-                val = val.replace(/^"|"$/g, '');
-                row[header] = val;
+        })
+            .then(function(response) {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function(rows) {
+                return Array.isArray(rows) && rows.length > 0 ? rows : null;
+            })
+            .catch(function() {
+                return null;
             });
-            rows.push(row);
-        }
-        return rows;
     }
 
-    async function loadFromGoogleSheets() {
-        var sheetId = window.GOOGLE_SHEET_ID;
-        if (!sheetId || sheetId === 'PEGA_AQUI_EL_ID_DE_TU_HOJA') return null;
-        try {
-            var url;
-            if (sheetId.startsWith('2PACX-')) {
-                url = 'https://docs.google.com/spreadsheets/d/e/' + sheetId + '/pub?output=csv';
-            } else {
-                url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv';
-            }
-            var response = await fetch(url);
-            if (!response.ok) return null;
-            var csvText = await response.text();
-            if (!csvText || csvText.trim().length === 0) return null;
-            var data = parseCSV(csvText);
-            return data.length > 0 ? data : null;
-        } catch (e) {
-            return null;
-        }
+    // One request per page load, shared by events + activities sections
+    function loadEventData() {
+        if (!eventDataPromise) eventDataPromise = loadFromInsForge();
+        return eventDataPromise;
     }
 
     // ========================================
     // Events
     // ========================================
     async function loadEvents() {
-        var sheetData = await loadFromGoogleSheets();
+        var sheetData = await loadEventData();
         if (sheetData) {
             events = sheetData
                 .filter(function(row) { return !row.type || row.type === 'evento'; })
                 .map(function(row) {
                     return {
-                        id: parseInt(row.id) || 0,
-                        title_es: row.title_es || row.title || '',
-                        title_pt: row.title_pt || row.title || '',
+                        id: row.id,
+                        title_es: row.title_es || '',
+                        title_pt: row.title_pt || '',
                         date: row.date || '',
                         time: row.time || '',
                         location: row.location || '',
                         category: row.category || 'cultural',
-                        desc_es: row.desc_es || row.description || '',
-                        desc_pt: row.desc_pt || row.description || '',
-                        registrationUrl: row.registrationUrl || null,
+                        desc_es: row.desc_es || '',
+                        desc_pt: row.desc_pt || '',
+                        registrationUrl: row.registration || null,
                         status: row.status || 'confirmed'
                     };
                 })
@@ -816,26 +801,26 @@
         var actGrid = document.getElementById('activities-grid');
         if (!actGrid) return;
         actGrid.innerHTML = '';
-        var sheetData = await loadFromGoogleSheets();
+        var sheetData = await loadEventData();
         var data;
         if (sheetData) {
             var sheetActivities = sheetData
                 .filter(function(row) { return row.type === 'actividad'; })
                 .map(function(row) {
                     return {
-                        id: parseInt(row.id) || 0,
-                        title_es: row.title_es || row.title || '',
-                        title_pt: row.title_pt || row.title || '',
-                        subtitle_es: row.subtitle_es || row.subtitle || '',
-                        subtitle_pt: row.subtitle_pt || row.subtitle || '',
+                        id: row.id,
+                        title_es: row.title_es || '',
+                        title_pt: row.title_pt || '',
+                        subtitle_es: row.subtitle_es || '',
+                        subtitle_pt: row.subtitle_pt || '',
                         frequency: row.frequency || '',
                         day: row.day || '',
                         time: row.time || '',
                         location: row.location || '',
                         category: row.category || 'cultural',
-                        desc_es: row.desc_es || row.description || '',
-                        desc_pt: row.desc_pt || row.description || '',
-                        registrationUrl: row.registrationUrl || null,
+                        desc_es: row.desc_es || '',
+                        desc_pt: row.desc_pt || '',
+                        registrationUrl: row.registration || null,
                         status: row.status || 'confirmed'
                     };
                 })
