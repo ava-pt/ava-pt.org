@@ -198,3 +198,46 @@ SITIO: https://ava-pt.org
 
 COMMITS REALIZADOS:
    - 9b616c0  Filter events/activities by date and status
+
+================================================================================
+BITÁCORA — 2026-09-28
+================================================================================
+
+1. MIGRACIÓN: GOOGLE SHEETS/CSV → INSFORGE (tabla public.events)
+   - El Google Sheet deja de ser la fuente: los eventos y actividades viven
+     ahora en la tabla public.events del proyecto InsForge ava-mail-master.
+   - Esquema: PK id UUID, legacy_id (ingesta idempotente), type
+     (evento/actividad), títulos/descripciones bilingües (pt/es), date,
+     frequency, day, time, location, category, registration, status.
+     Los CHECKs replican los valores permitidos del CSV.
+   - RLS: SELECT público para anon+authenticated; escritura solo
+     autenticado (el anon del portal ava-sys no escribe).
+   - Ingestadas las 10 filas del sheet (5 eventos + 5 actividades);
+     el Google Sheet queda archivado como fuente de datos.
+
+2. CAMBIOS EN ESTE SITIO
+   - script.js: se eliminan parseCSV y loadFromGoogleSheets; el nuevo
+     loadFromInsForge hace GET /api/database/records/events con la clave
+     anónima y una sola petición por página (loadEventData compartida por
+     loadEvents y renderActivities). Mapeo de columnas igual que el CSV.
+   - index.html: GOOGLE_SHEET_ID reemplazado por INSFORGE_URL +
+     INSFORGE_ANON_KEY (clave pública: RLS impide escritura).
+   - Sin cambios: shouldShowItem, filtros de categoría/estado, fallback
+     local de datos embebidos si InsForge no responde.
+   - Nota: los 5 eventos cargados tienen fechas pasadas, por lo que la
+     sección Eventos quedará vacía hasta cargar próximos eventos desde
+     el portal ava-sys.
+
+3. CAMBIOS EN AVA-MAIL-MASTER (ava-sys)
+   - Sección /eventos en el portal: lista con Eventos y Actividades
+     periódicas, crear, editar y eliminar (server functions con zod).
+   - Habilitada en app-switcher y nav-rail.
+
+VERIFICACIÓN
+   - node --check script.js: OK
+   - Loader end-to-end contra producción: HTTP 200, 10 filas,
+     5 actividades visibles tras shouldShowItem
+   - apps/mail: npm run build ✓, eslint 0 errores en archivos nuevos
+
+COMMITS REALIZADOS:
+   - 4cb039f feat(events): load events and activities from InsForge instead of Google Sheets CSV
