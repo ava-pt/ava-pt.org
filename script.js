@@ -63,6 +63,8 @@
             status_confirmed: 'Confirmado',
             status_soon: 'Próximamente',
             status_soldout: 'Agotado',
+            status_suspended: 'Suspendido',
+            status_preparing: 'En preparación',
             cat_label_cultural: 'Cultural',
             cat_label_desportivo: 'Deportivo',
             cat_label_social: 'Social',
@@ -137,6 +139,8 @@
             status_confirmed: 'Confirmado',
             status_soon: 'Em breve',
             status_soldout: 'Esgotado',
+            status_suspended: 'Suspendido',
+            status_preparing: 'Em preparação',
             cat_label_cultural: 'Cultural',
             cat_label_desportivo: 'Desportivo',
             cat_label_social: 'Social',
@@ -577,9 +581,10 @@
         }
     ];
 
-    // Filter: hide past dates, hide closed status, always show if no valid date and not closed
+    // Filter: hide past dates, hide closed/suspended/preparing status, always show if no valid date and not closed/suspended/preparing
     function shouldShowItem(item) {
-        if (normalizeStatus(item.status) === 'closed') return false;
+        var normStatus = normalizeStatus(item.status);
+        if (normStatus === 'closed' || normStatus === 'suspended' || normStatus === 'preparing') return false;
         if (!item.date) return true;
         var d = new Date(item.date);
         if (isNaN(d.getTime())) return true;
