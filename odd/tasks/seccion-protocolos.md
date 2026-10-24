@@ -102,11 +102,19 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
    → Resuelto con la migración `20261024111004_protocolos-partes-public.sql`: vista pública
    `protocolos_partes_public` (solo ids/papel/ordem, filtrada por `visivel_landing`) que la landing
    cruza con `entidades`. `protocolo_partes` sigue siendo solo `authenticated`.
-3. [PENDIENTE] Barrido empírico con la clave `anon` sobre tablas con columnas de nombres sensibles
-   (`?limit=1`): con filas visibles y datos personales quedan
+3. [RESUELTO 2026-10-24] Barrido empírico con la clave `anon` sobre tablas con columnas de nombres
+   sensibles (`?limit=1`) encontró datos personales legibles en
    `profiles` (8 filas con `email`, `telefone`), `favoritos` (1 fila con `email`) y
-   `email_send_log` (54 filas con `recipient_email`). Menor: `events.image_key` y
-   `entidades.logo_key` (bucket privado: la clave no da acceso) y `entidades.nif/notas`
-   (hoy en `null`; el NIF de AVA es dato institucional público). Sin exposición:
-   `ava_tasks`, `directiva`, `email_unsubscribe_tokens`, `meeting_participants`,
+   `email_send_log` (54 filas con `recipient_email`).
+   Restringido con la migración
+   `ava-sys/apps/mail/migrations/20261024135834_restrict-personal-columns-anon.sql`
+   (commit `7149f56` en `main`): `REVOKE SELECT ... FROM anon` + `GRANT SELECT` de solo las columnas
+   no personales en las tres tablas. Verificado como `anon`: `email`/`telefone`/`recipient_email` y
+   `select=*` → 401; `id,nome`/`id,status` → 200. `error_message`/`metadata` de `email_send_log`
+   (aún legibles) escaneados en las 54 filas: 0 correos, 0 patrones sensibles → dentro del alcance
+   aprobado. La landing no usa estas tablas (solo `events`, `protocolos`, `entidades`,
+   `protocolos_partes_public`); harness → `TODO OK`.
+   Menor, sin acción: `events.image_key` y `entidades.logo_key` (bucket privado: la clave no da
+   acceso) y `entidades.nif/notas` (hoy en `null`; el NIF de AVA es dato institucional público).
+   Sin exposición: `ava_tasks`, `directiva`, `email_unsubscribe_tokens`, `meeting_participants`,
    `suppressed_emails`, `task_assignees` (RLS devuelve 0 filas a `anon`).
