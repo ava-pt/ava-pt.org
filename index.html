@@ -36,6 +36,7 @@
                     <li><a href="#inicio" class="nav-link active" data-i18n="nav_inicio">Inicio</a></li>
                     <li><a href="#eventos" class="nav-link" data-i18n="nav_eventos">Eventos</a></li>
                     <li><a href="#actividades" class="nav-link" data-i18n="nav_actividades">Actividades</a></li>
+                    <li><a href="#protocolos" class="nav-link" data-i18n="nav_protocolos">Protocolos</a></li>
                     <li><a href="#sobre" class="nav-link" data-i18n="nav_sobre">Quiénes Somos</a></li>
 
                     <li class="nav-actions">
@@ -187,6 +188,30 @@
                 </div>
             </div>
             <div class="activities-grid" id="activities-grid"></div>
+        </div>
+    </section>
+
+    <!-- Protocolos Existentes -->
+    <section class="protocols" id="protocolos">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2 class="section-title" data-i18n="protocols_title">Protocolos Existentes</h2>
+                <p class="section-subtitle" data-i18n="protocols_subtitle">Acuerdos de colaboración y servicios de la AVA</p>
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <label class="filter-label" data-i18n="filter_tipo">Tipo</label>
+                    <div class="filter-buttons" id="protocol-type-filters">
+                        <button class="filter-btn active" data-category="todas" data-i18n="cat_todas">Todas</button>
+                        <button class="filter-btn" data-category="colaboracao" data-i18n="ptype_colaboracao">Colaboración</button>
+                        <button class="filter-btn" data-category="servicos" data-i18n="ptype_servicos">Servicios</button>
+                    </div>
+                </div>
+            </div>
+            <div class="protocols-grid" id="protocols-grid"></div>
+            <div class="events-empty" id="protocols-empty" style="display:none;">
+                <p data-i18n="protocols_empty">No hay protocolos publicados por el momento.</p>
+            </div>
         </div>
     </section>
 

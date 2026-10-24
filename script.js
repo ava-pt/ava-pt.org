@@ -41,6 +41,21 @@
             events_empty: 'No se encontraron eventos para los filtros seleccionados.',
             activities_title: 'Actividades Periódicas',
             activities_subtitle: 'Encuentros regulares de nuestra comunidad',
+            nav_protocolos: 'Protocolos',
+            protocols_title: 'Protocolos Existentes',
+            protocols_subtitle: 'Acuerdos de colaboración y servicios de la AVA',
+            filter_tipo: 'Tipo',
+            ptype_colaboracao: 'Colaboración',
+            ptype_servicos: 'Servicios',
+            protocols_empty: 'No hay protocolos publicados por el momento.',
+            pstate_ativo: 'Activo',
+            pstate_suspenso: 'Suspendido',
+            pstate_rescindido: 'Rescindido',
+            plabel_firmado: 'Firmado el',
+            plabel_vigencia: 'Vigencia',
+            pvig_indeterminada: 'Indeterminada',
+            pvig_ligada_proyecto: 'Vinculado al proyecto',
+            pdestaque: 'Destacado',
             about_title: '¿Quiénes Somos?',
             about_p1: 'La <strong>Asociación Venezuela Amiga</strong> es una organización sin fines de lucro dedicada a la integración, apoyo y celebración de la cultura venezolana en Portugal.',
             about_p2: 'Desde nuestra fundación en 2010, trabajamos para crear puentes entre la comunidad venezolana y la sociedad portuguesa, promoviendo eventos culturales, actividades deportivas, acciones solidarias e iniciativas educativas.',
@@ -117,6 +132,21 @@
             events_empty: 'Nenhum evento encontrado para os filtros selecionados.',
             activities_title: 'Actividades Periódicas',
             activities_subtitle: 'Encontros regulares da nossa comunidade',
+            nav_protocolos: 'Protocolos',
+            protocols_title: 'Protocolos Existentes',
+            protocols_subtitle: 'Acordos de colaboração e serviços da AVA',
+            filter_tipo: 'Tipo',
+            ptype_colaboracao: 'Colaboração',
+            ptype_servicos: 'Serviços',
+            protocols_empty: 'De momento não existem protocolos publicados.',
+            pstate_ativo: 'Ativo',
+            pstate_suspenso: 'Suspenso',
+            pstate_rescindido: 'Rescindido',
+            plabel_firmado: 'Assinado a',
+            plabel_vigencia: 'Vigência',
+            pvig_indeterminada: 'Indeterminada',
+            pvig_ligada_proyecto: 'Vinculado ao projeto',
+            pdestaque: 'Destaque',
             about_title: 'Quem Somos?',
             about_p1: 'A <strong>Associação Venezuela Amiga</strong> é uma organização sem fins lucrativos dedicada à integração, apoio e celebração da cultura venezuelana em Portugal.',
             about_p2: 'Desde a nossa fundação em 2010, trabalhamos para criar pontes entre a comunidade venezuelana e a sociedade portuguesa, promovendo eventos culturais, actividades desportivas, acções solidárias e iniciativas educativas.',
@@ -248,6 +278,7 @@
                     // Re-render dynamic content
                     renderEvents();
                     renderActivities();
+                    renderProtocolos();
                 }
             });
         });
@@ -855,6 +886,175 @@
     }
 
     // ========================================
+    // InsForge (protocolos table — public fields only)
+    // NOTE: never request pdf_key/pdf_url/pdf_nome_original/pdf_tamanho,
+    // notas_internas, image_key or image_url: the PDF and internal notes
+    // must never reach the browser.
+    // ========================================
+    var PROTOCOLOS_COLUMNS = 'id,titulo,tipo,areas,resumo,descricao,data_firma,local_firma,tipo_vigencia,vigencia_desde,vigencia_hasta,estado,projeto_vinculado,financiadores,visivel_landing,destaque,ordem';
+
+    function loadProtocolos() {
+        var baseUrl = window.INSFORGE_URL;
+        var anonKey = window.INSFORGE_ANON_KEY;
+        if (!baseUrl || !anonKey) return Promise.resolve(null);
+        var url = baseUrl + '/api/database/records/protocolos?select=' +
+            PROTOCOLOS_COLUMNS + '&order=ordem&limit=200';
+        return fetch(url, {
+            headers: {
+                'Authorization': 'Bearer ' + anonKey,
+                'apikey': anonKey
+            }
+        })
+            .then(function(response) {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function(rows) {
+                return Array.isArray(rows) && rows.length > 0 ? rows : null;
+            })
+            .catch(function() {
+                return null;
+            });
+    }
+
+    // ========================================
+    // Protocolos Existentes
+    // ========================================
+    var protocols = [];
+    var activeProtocolType = 'todas';
+
+    async function renderProtocolos() {
+        var protoGrid = document.getElementById('protocols-grid');
+        if (!protoGrid) return;
+        var data = await loadProtocolos();
+        if (data) {
+            protocols = data
+                .filter(function(row) { return row.visivel_landing === true; })
+                .map(function(row) {
+                    return {
+                        id: row.id,
+                        titulo: row.titulo || '',
+                        tipo: row.tipo || '',
+                        areas: Array.isArray(row.areas) ? row.areas : [],
+                        resumo: row.resumo || '',
+                        descricao: row.descricao || '',
+                        data_firma: row.data_firma || null,
+                        local_firma: row.local_firma || null,
+                        tipo_vigencia: row.tipo_vigencia || '',
+                        vigencia_desde: row.vigencia_desde || null,
+                        vigencia_hasta: row.vigencia_hasta || null,
+                        estado: row.estado || '',
+                        projeto_vinculado: row.projeto_vinculado || null,
+                        financiadores: Array.isArray(row.financiadores) ? row.financiadores : [],
+                        destaque: row.destaque === true
+                    };
+                });
+        } else {
+            protocols = [];
+        }
+        renderFilteredProtocols();
+    }
+
+    function getFilteredProtocols() {
+        return protocols.filter(function(protocol) {
+            return activeProtocolType === 'todas' || protocol.tipo === activeProtocolType;
+        });
+    }
+
+    // Label helpers (fallback to the raw value when no translation exists)
+    function getProtocolTypeLabel(tipo) {
+        if (!tipo) return '';
+        var label = t('ptype_' + tipo);
+        return label === 'ptype_' + tipo ? tipo : label;
+    }
+
+    function getProtocolStatusLabel(estado) {
+        if (!estado) return '';
+        var key = 'pstate_' + estado.toLowerCase().replace(/\s+/g, '');
+        var label = t(key);
+        return label === key ? estado : label;
+    }
+
+    // dd/mm/yyyy from a YYYY-MM-DD string (raw value otherwise)
+    function formatProtocolDate(dateStr) {
+        if (!dateStr) return '';
+        var parts = String(dateStr).split('-');
+        if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+        return String(dateStr);
+    }
+
+    function getProtocolVigenciaLabel(protocol) {
+        if (protocol.tipo_vigencia === 'indeterminada') {
+            return t('pvig_indeterminada');
+        }
+        if (protocol.tipo_vigencia === 'ligada-projeto') {
+            var label = t('pvig_ligada_proyecto');
+            if (protocol.vigencia_desde) {
+                label += ' ' + formatProtocolDate(protocol.vigencia_desde);
+                label += protocol.vigencia_hasta ? ' → ' + formatProtocolDate(protocol.vigencia_hasta) : ' →';
+            }
+            return label;
+        }
+        return protocol.tipo_vigencia || '';
+    }
+
+    function createProtocolCard(protocol) {
+        var card = document.createElement('article');
+        card.className = 'protocol-card' + (protocol.destaque ? ' protocol-card--destaque' : '');
+        var statusClass = normalizeStatus(protocol.estado);
+        var statusText = getProtocolStatusLabel(protocol.estado);
+        var meta = '';
+
+        if (protocol.data_firma) {
+            meta += '<div class="activity-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>' + t('plabel_firmado') + ' ' + formatProtocolDate(protocol.data_firma) + (protocol.local_firma ? ' — ' + protocol.local_firma : '') + '</span></div>';
+        }
+
+        var vigenciaLabel = getProtocolVigenciaLabel(protocol);
+        if (vigenciaLabel) {
+            meta += '<div class="activity-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>' + t('plabel_vigencia') + ': ' + vigenciaLabel + '</span></div>';
+        }
+
+        if (protocol.projeto_vinculado) {
+            meta += '<div class="activity-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span>' + protocol.projeto_vinculado + '</span></div>';
+        }
+
+        var areasHtml = '';
+        if (protocol.areas.length > 0) {
+            areasHtml = '<div class="protocol-areas">' +
+                protocol.areas.map(function(area) {
+                    return '<span class="protocol-area-chip">' + area + '</span>';
+                }).join('') +
+                '</div>';
+        }
+
+        card.innerHTML =
+            '<div class="protocol-card-header">' +
+                '<span class="protocol-type ' + protocol.tipo + '">' + getProtocolTypeLabel(protocol.tipo) + '</span>' +
+                (protocol.destaque ? '<span class="protocol-destaque">' + t('pdestaque') + '</span>' : '') +
+                '<span class="event-status ' + statusClass + '">' + statusText + '</span>' +
+            '</div>' +
+            '<h3 class="protocol-title">' + protocol.titulo + '</h3>' +
+            (protocol.resumo ? '<p class="protocol-summary">' + protocol.resumo + '</p>' : '') +
+            areasHtml +
+            (meta ? '<div class="protocol-meta">' + meta + '</div>' : '');
+        return card;
+    }
+
+    function renderFilteredProtocols() {
+        var protoGrid = document.getElementById('protocols-grid');
+        var protoEmpty = document.getElementById('protocols-empty');
+        if (!protoGrid) return;
+        protoGrid.innerHTML = '';
+        var filtered = getFilteredProtocols();
+        if (protoEmpty) {
+            protoEmpty.style.display = filtered.length === 0 ? 'block' : 'none';
+        }
+        filtered.forEach(function(protocol) {
+            protoGrid.appendChild(createProtocolCard(protocol));
+        });
+    }
+
+    // ========================================
     // Event Listeners
     // ========================================
     categoryFilters.addEventListener('click', function(e) {
@@ -874,6 +1074,18 @@
             btn.classList.add('active');
             activeActivityCategory = btn.dataset.category;
             renderFilteredActivities();
+        });
+    }
+
+    var protocolTypeFilters = document.getElementById('protocol-type-filters');
+    if (protocolTypeFilters) {
+        protocolTypeFilters.addEventListener('click', function(e) {
+            var btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            protocolTypeFilters.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            activeProtocolType = btn.dataset.category;
+            renderFilteredProtocols();
         });
     }
 
@@ -951,5 +1163,6 @@
     initCookieConsent();
     loadEvents();
     renderActivities();
+    renderProtocolos();
 
 })();
