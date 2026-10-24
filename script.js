@@ -57,6 +57,7 @@
             pvig_ligada_proyecto: 'Vinculado al proyecto',
             pdestaque: 'Destacado',
             protocol_info: 'Más información',
+            pcon_label: 'Firmado con',
             pdesc_label: 'Descripción',
             pservicos: 'Servicios',
             pbeneficios: 'Beneficios',
@@ -154,6 +155,7 @@
             pvig_ligada_proyecto: 'Vinculado ao projeto',
             pdestaque: 'Destaque',
             protocol_info: 'Mais informações',
+            pcon_label: 'Assinado com',
             pdesc_label: 'Descrição',
             pservicos: 'Serviços',
             pbeneficios: 'Benefícios',
@@ -929,6 +931,62 @@
             });
     }
 
+    // Institutional counterparties for the landing:
+    //   1) public projection of protocolo_partes (no personal data — RGPD)
+    //   2) public entidades (institutional name of each counterparty)
+    // One request per page load each; null when unavailable (view not applied yet).
+    var PARTES_COLUMNS = 'protocolo_id,entidade_id,papel,ordem';
+    var ENTIDADES_COLUMNS = 'id,nome,sigla,tipo';
+    var partesPromise = null;
+    var entidadesPromise = null;
+
+    function loadPublicRecords(table, columns) {
+        var baseUrl = window.INSFORGE_URL;
+        var anonKey = window.INSFORGE_ANON_KEY;
+        if (!baseUrl || !anonKey) return Promise.resolve(null);
+        var url = baseUrl + '/api/database/records/' + table + '?select=' + columns + '&limit=200';
+        return fetch(url, {
+            headers: {
+                'Authorization': 'Bearer ' + anonKey,
+                'apikey': anonKey
+            }
+        })
+            .then(function(response) {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function(rows) {
+                return Array.isArray(rows) && rows.length > 0 ? rows : null;
+            })
+            .catch(function() {
+                return null;
+            });
+    }
+
+    function loadProtocolParts() {
+        if (!partesPromise) partesPromise = loadPublicRecords('protocolos_partes_public', PARTES_COLUMNS);
+        return partesPromise;
+    }
+
+    function loadEntidades() {
+        if (!entidadesPromise) entidadesPromise = loadPublicRecords('entidades', ENTIDADES_COLUMNS);
+        return entidadesPromise;
+    }
+
+    // Counterparty = the party whose papel is 'parceiro' (AVA is 'ava'), lowest ordem wins
+    function resolveCounterparty(protocolId, parts, entidadesById) {
+        if (!parts) return '';
+        var match = null;
+        for (var i = 0; i < parts.length; i++) {
+            var part = parts[i];
+            if (part.protocolo_id !== protocolId || part.papel !== 'parceiro') continue;
+            if (!match || (part.ordem || 0) < (match.ordem || 0)) match = part;
+        }
+        if (!match) return '';
+        var ent = entidadesById[match.entidade_id];
+        return ent && ent.nome ? ent.nome : '';
+    }
+
     // ========================================
     // Protocolos Existentes
     // ========================================
@@ -940,6 +998,12 @@
         if (!protoGrid) return;
         var data = await loadProtocolos();
         if (data) {
+            var parts = await loadProtocolParts();
+            var entidades = await loadEntidades();
+            var entidadesById = {};
+            if (entidades) {
+                entidades.forEach(function(ent) { entidadesById[ent.id] = ent; });
+            }
             protocols = data
                 .filter(function(row) { return row.visivel_landing === true; })
                 .map(function(row) {
@@ -960,6 +1024,7 @@
                         financiadores: Array.isArray(row.financiadores) ? row.financiadores : [],
                         servicos: Array.isArray(row.servicos) ? row.servicos : [],
                         beneficios: Array.isArray(row.beneficios) ? row.beneficios : [],
+                        contraparte: resolveCounterparty(row.id, parts, entidadesById),
                         destaque: row.destaque === true
                     };
                 });
@@ -1042,6 +1107,15 @@
             '</div>';
     }
 
+    // "Firmado con: <entidad contraparte>" — institutional name only
+    function buildProtocolEntity(protocol) {
+        if (!protocol.contraparte) return '';
+        return '<p class="protocol-entity">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+            '<span><strong>' + t('pcon_label') + ':</strong> ' + protocol.contraparte + '</span>' +
+        '</p>';
+    }
+
     // ========================================
     // Protocol detail modal (Más información)
     // ========================================
@@ -1059,6 +1133,7 @@
         '</div>';
 
         html += '<h2 class="protocol-modal-title">' + protocol.titulo + '</h2>';
+        html += buildProtocolEntity(protocol);
         if (protocol.resumo) html += '<p class="protocol-modal-lead">' + protocol.resumo + '</p>';
         html += buildProtocolAreas(protocol);
         if (meta) html += '<div class="protocol-meta">' + meta + '</div>';
@@ -1129,6 +1204,7 @@
                 '<span class="event-status ' + statusClass + '">' + statusText + '</span>' +
             '</div>' +
             '<h3 class="protocol-title">' + protocol.titulo + '</h3>' +
+            buildProtocolEntity(protocol) +
             (protocol.resumo ? '<p class="protocol-summary">' + protocol.resumo + '</p>' : '') +
             areasHtml +
             (meta ? '<div class="protocol-meta">' + meta + '</div>' : '') +

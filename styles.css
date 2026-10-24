@@ -1856,6 +1856,36 @@ img {
     margin-bottom: 12px;
 }
 
+/* Counterparty: "Firmado con: <entidad>" */
+.protocol-entity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--gray-700);
+    background: var(--blue-light);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin: 6px 0 10px;
+}
+
+.protocol-entity svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--blue);
+}
+
+.protocol-entity strong {
+    color: var(--blue);
+    font-weight: 700;
+}
+
+#protocol-modal-body .protocol-entity {
+    font-size: 0.86rem;
+}
+
 .protocol-areas {
     display: flex;
     flex-wrap: wrap;
