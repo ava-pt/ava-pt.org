@@ -32,6 +32,12 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
 - [x] T2: Loader + render + filtros + i18n ES/PT en `script.js`
 - [x] T3: Estilos `.protocols` / `.protocol-card` en `styles.css`, consistente con `.activities`
 - [x] T4: Verificación + commit `c95e9e5` en rama `feat/seccion-protocolos`
+- [x] T5: Botón "Más información" por tarjeta + modal de detalle con descripción, servicios,
+      beneficios y financiadores (commit de la rama feature, ver más abajo)
+- [ ] T6: Mostrar la entidad contraparte ("con quién firmamos") — BLOQUEADO: la tabla `protocolos`
+      no tiene ese campo y `protocolo_partes` es solo `authenticated` por RGPD. Pendiente de decisión
+      del usuario entre: vista pública no personal de `protocolo_partes` + join con `entidades`
+      (pública), columna denormalizada en `protocolos`, o no mostrarla.
 
 ## Criterios de aceptación
 - La sección aparece entre Actividades Periódicas y "¿Quiénes Somos?" y se vea en ES y PT.
@@ -43,6 +49,20 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
   El intento de delegación devolvió `Free usage limit reached` en la entrega del resultado, pero el writer
   sí ejecutó y dejó los 3 archivos escritos; el padre hizo la verificación y el commit (degradación inline).
 - 2026-10-24: T1–T4 completados. Commit `c95e9e5` (417 líneas: index.html 25, script.js 213, styles.css 179).
+- 2026-10-24: merge fast-forward a `master` + push (cuenta `ava-pt`, activa restaurada a `jdapalma`),
+  build de GitHub Pages `success` y sección visible en https://ava-pt.org/.
+- 2026-10-24: T5 completado (modal de detalle). T6 bloqueado por el dato de la entidad contraparte.
+  Ruta: inline (la delegación sigue inutilizable por el límite de OpenCode).
+
+## Verificación T5 (observada)
+- `node --check script.js` → OK.
+- Servido localmente: ids `protocol-modal`, `protocol-modal-close`, `protocol-modal-body` en HTML;
+  12 coincidencias de las piezas JS y 10 de las clases CSS nuevas.
+- API con las columnas actualizadas (+`servicos`,`beneficios`) → 200, 19 campos, 4/5 servicios y
+  3/3 beneficios por registro, sin `pdf_*` ni `notas_internas`.
+- Harness funcional `/tmp/opencode/protocolos-harness.js` (script.js real + DOM stub + API real):
+  2 protocolos cargados; detalle con título, todos los servicios, todos los beneficios, sin rastros
+  de PDF/notas; etiquetas ES correctas → `TODO OK`.
 
 ## Verificación (observada)
 - `node --check script.js` → OK.
@@ -54,7 +74,14 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
 - RDD: `off` (global) → sin revisión nativa; checks ordinarios nominales.
 - Pendiente: revisión visual humana en ES/PT y decisión sobre push/PR.
 
-## Hallazgo de seguridad (no abordado por esta feature)
-La RLS de la tabla `protocolos` permite al `anon` leer `pdf_url`, `pdf_key`, `pdf_nome_original`,
-`pdf_tamanho` y `notas_internas` (confirmado con un GET sin `select`). El front no los pide, pero
-cualquier persona puede. Recomendado: restringir esos campos en RLS/admin.
+## Hallazgo de seguridad / modelo de datos (no abiertos por esta feature)
+1. La RLS de la tabla `protocolos` permite al `anon` leer `pdf_url`, `pdf_key`, `pdf_nome_original`,
+   `pdf_tamanho` y `notas_internas` (confirmado con un GET sin `select`). El front no los pide, pero
+   cualquier persona puede. Recomendado: restringir esos campos en RLS/admin.
+2. El esquema real está en `ava-sys/apps/mail/migrations/20261008170000_create-protocolos.sql`:
+   `entidades` es **público** (datos institucionales, pensado "para la landing") y `protocolo_partes`
+   es **solo `authenticated`** de forma deliberada por RGPD (contiene email y NIF personal de los
+   representantes). La tabla `protocolos` de la landing NO tiene campo de entidad contraparte: el
+   vínculo es `protocolo_partes(protocolo_id, entidade_id, papel)`.
+   → Para mostrar "con quién firmamos" hace falta una proyección pública no personal (vista de
+   `protocolo_partes` con solo ids/papel/ordem) o denormalizar en `protocolos`.

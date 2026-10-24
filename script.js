@@ -56,6 +56,12 @@
             pvig_indeterminada: 'Indeterminada',
             pvig_ligada_proyecto: 'Vinculado al proyecto',
             pdestaque: 'Destacado',
+            protocol_info: 'Más información',
+            pdesc_label: 'Descripción',
+            pservicos: 'Servicios',
+            pbeneficios: 'Beneficios',
+            pfinanciadores: 'Financiadores',
+            pclose: 'Cerrar',
             about_title: '¿Quiénes Somos?',
             about_p1: 'La <strong>Asociación Venezuela Amiga</strong> es una organización sin fines de lucro dedicada a la integración, apoyo y celebración de la cultura venezolana en Portugal.',
             about_p2: 'Desde nuestra fundación en 2010, trabajamos para crear puentes entre la comunidad venezolana y la sociedad portuguesa, promoviendo eventos culturales, actividades deportivas, acciones solidarias e iniciativas educativas.',
@@ -147,6 +153,12 @@
             pvig_indeterminada: 'Indeterminada',
             pvig_ligada_proyecto: 'Vinculado ao projeto',
             pdestaque: 'Destaque',
+            protocol_info: 'Mais informações',
+            pdesc_label: 'Descrição',
+            pservicos: 'Serviços',
+            pbeneficios: 'Benefícios',
+            pfinanciadores: 'Financiadores',
+            pclose: 'Fechar',
             about_title: 'Quem Somos?',
             about_p1: 'A <strong>Associação Venezuela Amiga</strong> é uma organização sem fins lucrativos dedicada à integração, apoio e celebração da cultura venezuelana em Portugal.',
             about_p2: 'Desde a nossa fundação em 2010, trabalhamos para criar pontes entre a comunidade venezuelana e a sociedade portuguesa, promovendo eventos culturais, actividades desportivas, acções solidárias e iniciativas educativas.',
@@ -891,7 +903,7 @@
     // notas_internas, image_key or image_url: the PDF and internal notes
     // must never reach the browser.
     // ========================================
-    var PROTOCOLOS_COLUMNS = 'id,titulo,tipo,areas,resumo,descricao,data_firma,local_firma,tipo_vigencia,vigencia_desde,vigencia_hasta,estado,projeto_vinculado,financiadores,visivel_landing,destaque,ordem';
+    var PROTOCOLOS_COLUMNS = 'id,titulo,tipo,areas,resumo,descricao,data_firma,local_firma,tipo_vigencia,vigencia_desde,vigencia_hasta,estado,projeto_vinculado,financiadores,servicos,beneficios,visivel_landing,destaque,ordem';
 
     function loadProtocolos() {
         var baseUrl = window.INSFORGE_URL;
@@ -946,6 +958,8 @@
                         estado: row.estado || '',
                         projeto_vinculado: row.projeto_vinculado || null,
                         financiadores: Array.isArray(row.financiadores) ? row.financiadores : [],
+                        servicos: Array.isArray(row.servicos) ? row.servicos : [],
+                        beneficios: Array.isArray(row.beneficios) ? row.beneficios : [],
                         destaque: row.destaque === true
                     };
                 });
@@ -953,6 +967,7 @@
             protocols = [];
         }
         renderFilteredProtocols();
+        refreshOpenProtocolModal();
     }
 
     function getFilteredProtocols() {
@@ -998,11 +1013,8 @@
         return protocol.tipo_vigencia || '';
     }
 
-    function createProtocolCard(protocol) {
-        var card = document.createElement('article');
-        card.className = 'protocol-card' + (protocol.destaque ? ' protocol-card--destaque' : '');
-        var statusClass = normalizeStatus(protocol.estado);
-        var statusText = getProtocolStatusLabel(protocol.estado);
+    // Shared meta block: signature, validity, linked project (card + modal)
+    function buildProtocolMeta(protocol) {
         var meta = '';
 
         if (protocol.data_firma) {
@@ -1018,14 +1030,97 @@
             meta += '<div class="activity-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span>' + protocol.projeto_vinculado + '</span></div>';
         }
 
-        var areasHtml = '';
-        if (protocol.areas.length > 0) {
-            areasHtml = '<div class="protocol-areas">' +
-                protocol.areas.map(function(area) {
-                    return '<span class="protocol-area-chip">' + area + '</span>';
-                }).join('') +
+        return meta;
+    }
+
+    function buildProtocolAreas(protocol) {
+        if (!protocol.areas || protocol.areas.length === 0) return '';
+        return '<div class="protocol-areas">' +
+            protocol.areas.map(function(area) {
+                return '<span class="protocol-area-chip">' + area + '</span>';
+            }).join('') +
+            '</div>';
+    }
+
+    // ========================================
+    // Protocol detail modal (Más información)
+    // ========================================
+    var openProtocolId = null;
+
+    function buildProtocolDetail(protocol) {
+        var statusClass = normalizeStatus(protocol.estado);
+        var meta = buildProtocolMeta(protocol);
+        var html = '';
+
+        html += '<div class="protocol-card-header">' +
+            '<span class="protocol-type ' + protocol.tipo + '">' + getProtocolTypeLabel(protocol.tipo) + '</span>' +
+            (protocol.destaque ? '<span class="protocol-destaque">' + t('pdestaque') + '</span>' : '') +
+            '<span class="event-status ' + statusClass + '">' + getProtocolStatusLabel(protocol.estado) + '</span>' +
+        '</div>';
+
+        html += '<h2 class="protocol-modal-title">' + protocol.titulo + '</h2>';
+        if (protocol.resumo) html += '<p class="protocol-modal-lead">' + protocol.resumo + '</p>';
+        html += buildProtocolAreas(protocol);
+        if (meta) html += '<div class="protocol-meta">' + meta + '</div>';
+
+        if (protocol.descricao) {
+            html += '<h4>' + t('pdesc_label') + '</h4><p>' + protocol.descricao + '</p>';
+        }
+        if (protocol.servicos.length > 0) {
+            html += '<h4>' + t('pservicos') + '</h4><ul class="pm-list">' +
+                protocol.servicos.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
+                '</ul>';
+        }
+        if (protocol.beneficios.length > 0) {
+            html += '<h4>' + t('pbeneficios') + '</h4><ul class="pm-list">' +
+                protocol.beneficios.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
+                '</ul>';
+        }
+        if (protocol.financiadores.length > 0) {
+            html += '<h4>' + t('pfinanciadores') + '</h4><div class="protocol-areas">' +
+                protocol.financiadores.map(function(f) { return '<span class="protocol-area-chip">' + f + '</span>'; }).join('') +
                 '</div>';
         }
+
+        return html;
+    }
+
+    function openProtocolModal(protocol) {
+        var modal = document.getElementById('protocol-modal');
+        var body = document.getElementById('protocol-modal-body');
+        if (!modal || !body) return;
+        openProtocolId = protocol.id;
+        body.innerHTML = buildProtocolDetail(protocol);
+        modal.style.display = 'flex';
+    }
+
+    function closeProtocolModal() {
+        var modal = document.getElementById('protocol-modal');
+        if (!modal) return;
+        openProtocolId = null;
+        modal.style.display = 'none';
+    }
+
+    // Re-render the open modal on language switch / data reload
+    function refreshOpenProtocolModal() {
+        if (openProtocolId === null) return;
+        var protocol = null;
+        for (var i = 0; i < protocols.length; i++) {
+            if (protocols[i].id === openProtocolId) { protocol = protocols[i]; break; }
+        }
+        if (!protocol) { closeProtocolModal(); return; }
+        var body = document.getElementById('protocol-modal-body');
+        if (body) body.innerHTML = buildProtocolDetail(protocol);
+    }
+
+    function createProtocolCard(protocol) {
+        var card = document.createElement('article');
+        card.className = 'protocol-card' + (protocol.destaque ? ' protocol-card--destaque' : '');
+        var statusClass = normalizeStatus(protocol.estado);
+        var statusText = getProtocolStatusLabel(protocol.estado);
+        var meta = buildProtocolMeta(protocol);
+
+        var areasHtml = buildProtocolAreas(protocol);
 
         card.innerHTML =
             '<div class="protocol-card-header">' +
@@ -1036,7 +1131,13 @@
             '<h3 class="protocol-title">' + protocol.titulo + '</h3>' +
             (protocol.resumo ? '<p class="protocol-summary">' + protocol.resumo + '</p>' : '') +
             areasHtml +
-            (meta ? '<div class="protocol-meta">' + meta + '</div>' : '');
+            (meta ? '<div class="protocol-meta">' + meta + '</div>' : '') +
+            '<div class="protocol-card-footer">' +
+                '<button type="button" class="protocol-info-link" data-protocol-id="' + protocol.id + '">' +
+                    t('protocol_info') +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+                '</button>' +
+            '</div>';
         return card;
     }
 
@@ -1088,6 +1189,34 @@
             renderFilteredProtocols();
         });
     }
+
+    // "Más información" — open protocol detail modal
+    var protocolGrid = document.getElementById('protocols-grid');
+    if (protocolGrid) {
+        protocolGrid.addEventListener('click', function(e) {
+            var btn = e.target.closest('.protocol-info-link');
+            if (!btn) return;
+            var id = btn.getAttribute('data-protocol-id');
+            for (var i = 0; i < protocols.length; i++) {
+                if (String(protocols[i].id) === id) {
+                    openProtocolModal(protocols[i]);
+                    return;
+                }
+            }
+        });
+    }
+
+    var protocolModal = document.getElementById('protocol-modal');
+    var protocolModalClose = document.getElementById('protocol-modal-close');
+    if (protocolModalClose) protocolModalClose.addEventListener('click', closeProtocolModal);
+    if (protocolModal) {
+        protocolModal.addEventListener('click', function(e) {
+            if (e.target === protocolModal) closeProtocolModal();
+        });
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeProtocolModal();
+    });
 
     monthFilter.addEventListener('change', function(e) {
         activeMonth = e.target.value;

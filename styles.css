@@ -1675,6 +1675,98 @@ img {
     }
 }
 
+/* ============ PROTOCOL DETAIL (Más información) ============ */
+.protocol-card-footer {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--gray-200);
+}
+
+.protocol-info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--blue);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.protocol-info-link svg {
+    width: 15px;
+    height: 15px;
+    transition: transform var(--transition);
+}
+
+.protocol-info-link:hover {
+    text-decoration: underline;
+}
+
+.protocol-info-link:hover svg {
+    transform: translateX(3px);
+}
+
+.protocol-info-link:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.protocol-modal-title {
+    font-size: 1.25rem;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    padding-right: 32px;
+    letter-spacing: -0.01em;
+}
+
+.protocol-modal-lead {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+/* Services / benefits lists inside the modal */
+.pm-list {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.pm-list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--gray-700);
+}
+
+.pm-list li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 0 3px var(--yellow-light);
+}
+
+@media (max-width: 480px) {
+    .protocol-modal-title {
+        font-size: 1.1rem;
+    }
+}
+
 /* ============ PROTOCOLS ============ */
 .protocols-grid {
     display: flex;
