@@ -34,10 +34,10 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
 - [x] T4: Verificación + commit `c95e9e5` en rama `feat/seccion-protocolos`
 - [x] T5: Botón "Más información" por tarjeta + modal de detalle con descripción, servicios,
       beneficios y financiadores (commit de la rama feature, ver más abajo)
-- [ ] T6: Mostrar la entidad contraparte ("con quién firmamos") — BLOQUEADO: la tabla `protocolos`
-      no tiene ese campo y `protocolo_partes` es solo `authenticated` por RGPD. Pendiente de decisión
-      del usuario entre: vista pública no personal de `protocolo_partes` + join con `entidades`
-      (pública), columna denormalizada en `protocolos`, o no mostrarla.
+- [x] T6: Entidad contraparte ("con quién firmamos") — vía vista pública
+      `protocolos_partes_public` (solo `protocolo_id, entidade_id, papel, ordem`, filtrada por
+      `visivel_landing`) + join con `entidades` (ya pública). Migración
+      `ava-sys/apps/mail/migrations/20261024111004_protocolos-partes-public.sql` APLICADA.
 
 ## Criterios de aceptación
 - La sección aparece entre Actividades Periódicas y "¿Quiénes Somos?" y se vea en ES y PT.
@@ -64,6 +64,17 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
   2 protocolos cargados; detalle con título, todos los servicios, todos los beneficios, sin rastros
   de PDF/notas; etiquetas ES correctas → `TODO OK`.
 
+## Verificación T6 (observada)
+- Migración creada con `npx -y @insforge/cli db migrations new protocolos-partes-public` →
+  `20261024111004_protocolos-partes-public.sql`, aplicada con `db migrations up <file>` → `✓ Applied`.
+- Vista con `anon`: 4 filas (2 protocolos × papel `ava`/`parceiro`) y **exactamente 4 columnas**
+  (`protocolo_id, entidade_id, papel, ordem`): sin `representante_email`, `representante_nome`,
+  `representante_cargo` ni `coordinadores`.
+- Regresión: `protocolo_partes` (tabla base) sigue devolviendo **401 permission denied** para `anon`.
+- Harness con la vista viva → resolución automática de contraparte `true` en ambos protocolos:
+  "Movimento 55+ Associação" y "Abogada Paula Calabria da Silva". `node --check` → OK.
+- Commits: `6e5beb5` (modal) y `eb95e32` (contraparte) en `feat/seccion-protocolos`.
+
 ## Verificación (observada)
 - `node --check script.js` → OK.
 - `python3 -m http.server 8123` + `curl` → sección presente (5 coincidencias `protocolos` en HTML),
@@ -83,5 +94,6 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
    es **solo `authenticated`** de forma deliberada por RGPD (contiene email y NIF personal de los
    representantes). La tabla `protocolos` de la landing NO tiene campo de entidad contraparte: el
    vínculo es `protocolo_partes(protocolo_id, entidade_id, papel)`.
-   → Para mostrar "con quién firmamos" hace falta una proyección pública no personal (vista de
-   `protocolo_partes` con solo ids/papel/ordem) o denormalizar en `protocolos`.
+   → Resuelto con la migración `20261024111004_protocolos-partes-public.sql`: vista pública
+   `protocolos_partes_public` (solo ids/papel/ordem, filtrada por `visivel_landing`) que la landing
+   cruza con `entidades`. `protocolo_partes` sigue siendo solo `authenticated`.
