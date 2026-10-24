@@ -86,9 +86,14 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
 - Pendiente: revisión visual humana en ES/PT y decisión sobre push/PR.
 
 ## Hallazgo de seguridad / modelo de datos (no abiertos por esta feature)
-1. La RLS de la tabla `protocolos` permite al `anon` leer `pdf_url`, `pdf_key`, `pdf_nome_original`,
-   `pdf_tamanho` y `notas_internas` (confirmado con un GET sin `select`). El front no los pide, pero
-   cualquier persona puede. Recomendado: restringir esos campos en RLS/admin.
+1. [RESUELTO 2026-10-24] La RLS/privilegios de `protocolos` permitían al `anon` leer `pdf_url`,
+   `pdf_key`, `pdf_nome_original`, `pdf_tamanho`, `notas_internas`, `image_key` e `image_url`.
+   Restringido con la migración
+   `ava-sys/apps/mail/migrations/20261024134748_restrict-protocolos-public-columns.sql`
+   (commit `5726f76` en `main`): `REVOKE SELECT ... FROM anon` + `GRANT SELECT (26 columnas públicas)`.
+   `authenticated` conserva las 33 columnas (plataforma intacta).
+   Verificado como `anon`: landing 200 con sus columnas exactas; `select=*`, `pdf_url`,
+   `pdf_key`, `notas_internas`, `image_key` → 401 `permission denied for table protocolos`.
 2. El esquema real está en `ava-sys/apps/mail/migrations/20261008170000_create-protocolos.sql`:
    `entidades` es **público** (datos institucionales, pensado "para la landing") y `protocolo_partes`
    es **solo `authenticated`** de forma deliberada por RGPD (contiene email y NIF personal de los
@@ -97,3 +102,11 @@ Datos actuales (2 registros, ambos `visivel_landing=true`, estado `ativo`):
    → Resuelto con la migración `20261024111004_protocolos-partes-public.sql`: vista pública
    `protocolos_partes_public` (solo ids/papel/ordem, filtrada por `visivel_landing`) que la landing
    cruza con `entidades`. `protocolo_partes` sigue siendo solo `authenticated`.
+3. [PENDIENTE] Barrido empírico con la clave `anon` sobre tablas con columnas de nombres sensibles
+   (`?limit=1`): con filas visibles y datos personales quedan
+   `profiles` (8 filas con `email`, `telefone`), `favoritos` (1 fila con `email`) y
+   `email_send_log` (54 filas con `recipient_email`). Menor: `events.image_key` y
+   `entidades.logo_key` (bucket privado: la clave no da acceso) y `entidades.nif/notas`
+   (hoy en `null`; el NIF de AVA es dato institucional público). Sin exposición:
+   `ava_tasks`, `directiva`, `email_unsubscribe_tokens`, `meeting_participants`,
+   `suppressed_emails`, `task_assignees` (RLS devuelve 0 filas a `anon`).
